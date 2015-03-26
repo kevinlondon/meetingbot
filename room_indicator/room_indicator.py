@@ -1,13 +1,13 @@
 import sys
+import os
 import json
-import httplib2
 import arrow
+import httplib2
 
 from oauth2client.client import SignedJwtAssertionCredentials
 from apiclient.discovery import build
 
-from calendars import Calendar
-from events import Event
+from googlecal import Calendar, Event
 
 SERVER_KEY_PATH = "server_key.json"
 USER = "kevin@wiredrive.com"
@@ -46,7 +46,9 @@ def main():
     for calendar in useful_calendars:
         calendar.get_events(service)
         for event in calendar.events:
-            event.show()
+            print(event._data)
+            #event.show()
+
 
 if __name__ == '__main__':
     main()
