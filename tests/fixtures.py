@@ -37,6 +37,7 @@ def attendees():
             u'email': u'foo-email@resource.calendar.google.com',
             u'responseStatus': u'accepted'
         }
+    ]
 
 
 @pytest.fixture
