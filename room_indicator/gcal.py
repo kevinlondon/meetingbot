@@ -1,6 +1,6 @@
 from operator import attrgetter
-import arrow
 
+import arrow
 
 class Calendar(object):
 
@@ -26,7 +26,6 @@ class Calendar(object):
             singleEvents=True,
         ).execute()
 
-        print "\nRoom: ", self.summary
         event_list = [Event(data) for data in events['items'] if 'start' in data]
         self.events = sorted(event_list, key=attrgetter('start'))
 
@@ -39,6 +38,7 @@ class Event(object):
     def __init__(self, data):
         self._data = data
         self._assign_attributes()
+        self._meeting = None
 
     def __repr__(self):
         return "{0} - {1}\t{2}".format(self.start, self.end, self.summary)
@@ -64,24 +64,35 @@ class Event(object):
         return self.start - arrow.now()
 
     @property
-    def gotomeeting_id(self):
-        if "gotomeeting" in self.description:
-            link = "gotomeeting.com/join/"
-            gotomeeting_raw = self.description.split(link)[1]
-            gotomeeting_id = gotomeeting_raw.split("\n")[0]
-            return gotomeeting_id
-        else:
-            return "N/A"
+    def time_until_end(self):
+        return self.end - arrow.now()
+
+    @property
+    def go_to_meeting(self):
+        if not self._meeting and "gotomeeting" in self.description:
+            self._meeting = GoToMeeting(self.description)
+
+        return self._meeting
 
     def show(self):
-        print self.summary
-        print "* {0} - {1}".format(self.start, self.end)
-        print "* Time Until Start:", self.time_until_start
-        print "* GoToMeeting ID: {0}".format(self.gotomeeting_id)
-        print "* Attendees:\n",
+        print(self.summary)
+        print("* {0} - {1}".format(self.start, self.end))
+        print("* Time Until Start:", self.time_until_start)
+        print("* GoToMeeting ID: {0}".format(self.gotomeeting_id))
+        print("* Attendees:\n",)
         for attendee in self.attendees:
-            print "\t{0}".format(attendee)
+            print("\t{0}".format(attendee))
 
-        print ""
+        print("")
 
 
+class GoToMeeting(object):
+
+    def __init__(self, raw_description):
+        self._raw_description = raw_description
+
+    def do_a_thing(self):
+        link = "gotomeeting.com/join/"
+        gotomeeting_raw = self.description.split(link)[1]
+        gotomeeting_id = gotomeeting_raw.split("\n")[0]
+        return gotomeeting_id
