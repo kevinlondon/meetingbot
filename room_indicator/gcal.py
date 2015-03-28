@@ -1,4 +1,5 @@
 from operator import attrgetter
+import webbrowser
 
 import arrow
 
@@ -16,7 +17,7 @@ class Calendar(object):
 
     def get_events(self, calendar_service):
         now = arrow.now()
-        tomorrow = arrow.now().replace(days=+1)
+        tomorrow = arrow.now().replace(days=+3)
 
         events = calendar_service.events().list(
             calendarId=self.id,
@@ -77,9 +78,8 @@ class Event(object):
     def show(self):
         print(self.summary)
         print("* {0} - {1}".format(self.start, self.end))
-        print("* Time Until Start:", self.time_until_start)
-        print("* GoToMeeting ID: {0}".format(self.gotomeeting_id))
-        print("* Attendees:\n",)
+        print("* Time Until Start: {0}".format(self.time_until_start))
+        print("* Attendees:\n")
         for attendee in self.attendees:
             print("\t{0}".format(attendee))
 
@@ -100,3 +100,17 @@ class GoToMeeting(object):
             self._id = raw_id.split("\n")[0]
 
         return self._id
+
+    @property
+    def url(self):
+        return "https://app.gotomeeting.com/index.html?meetingid={0}".format(self.id)
+
+    def join(self):
+        """Open a web browser and join the GoToMeeting.
+
+        Note: Unfortunately, this does not work due the way that GoToMeeting
+        is configured currently. We can join as a client but cannot start
+        a meeting as an organizer in Linux. This would work perfectly fine
+        on a Mac or Windows installation.
+        """
+        webbrowser.open(self.url)

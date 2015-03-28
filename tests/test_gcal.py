@@ -102,3 +102,16 @@ class TestGoToMeeting:
     def test_can_pull_meeting_id_from_description(self, room_event):
         gotomeeting = GoToMeeting(room_event.description)
         assert gotomeeting.id == "MEETING_ID"
+
+    def test_link_ends_with_id(self):
+        gotomeeting = GoToMeeting(meeting_description="")
+        fake_id = "foo"
+        gotomeeting._id = fake_id
+        assert gotomeeting.url.endswith(fake_id)
+
+    @patch("webbrowser.open")
+    def test_opening_link_includes_url(self, open_browser_mock):
+        gtm = GoToMeeting("")
+        gtm._id = "foo"
+        gtm.join()
+        open_browser_mock.assert_called_once_with(gtm.url)
