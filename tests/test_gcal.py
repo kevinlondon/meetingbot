@@ -95,3 +95,10 @@ class TestEvents:
         minutes_before = room_event.end.replace(minutes=-10)
         with patch.object(arrow, "now", return_value=minutes_before):
             assert room_event.time_until_end == timedelta(minutes=10)
+
+
+class TestGoToMeeting:
+
+    def test_can_pull_meeting_id_from_description(self, room_event):
+        gotomeeting = GoToMeeting(room_event.description)
+        assert gotomeeting.id == "MEETING_ID"

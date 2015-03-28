@@ -88,11 +88,15 @@ class Event(object):
 
 class GoToMeeting(object):
 
-    def __init__(self, raw_description):
-        self._raw_description = raw_description
+    def __init__(self, meeting_description):
+        self._meeting_description = meeting_description
+        self._id = None
 
-    def do_a_thing(self):
-        link = "gotomeeting.com/join/"
-        gotomeeting_raw = self.description.split(link)[1]
-        gotomeeting_id = gotomeeting_raw.split("\n")[0]
-        return gotomeeting_id
+    @property
+    def id(self):
+        if not self._id:
+            link = "gotomeeting.com/join/"
+            raw_id = self._meeting_description.split(link)[1]
+            self._id = raw_id.split("\n")[0]
+
+        return self._id
