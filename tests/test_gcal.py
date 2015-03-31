@@ -3,7 +3,7 @@ import pytest
 import arrow
 from datetime import timedelta
 from mock import patch
-from meetingbot.gcal import Event, GoToMeeting, Calendar
+from meetingbot.gcal import Event, GoToMeeting, Calendar, User
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def calendar():
 
 @pytest.fixture
 def organizer():
-    {
+    return {
         u'organizer': True,
         u'displayName': u'Kevin London',
         u'email': u'kevinlondon@gmail.com',
@@ -36,8 +36,8 @@ def organizer():
 
 
 @pytest.fixture
-def attendee():
-    {
+def room():
+    return {
         u'resource': True,
         u'self': True,
         u'displayName': u'Small Conference Room',
@@ -47,8 +47,8 @@ def attendee():
 
 
 @pytest.fixture
-def attendees(attendee, organizer):
-    return [attendee, organizer]
+def attendees(room, organizer):
+    return [room, organizer]
 
 
 @pytest.fixture
@@ -137,6 +137,19 @@ class TestEvents:
         countdown = event.countdown()
         expected_countdown = "00:05:00 until the end of {0}".format(event.summary)
         assert countdown == expected_countdown
+
+
+class TestUser:
+
+    @pytest.fixture
+    def user(self, organizer):
+        return User(data=organizer)
+
+    def test_user_stores_data(self, organizer, user):
+        assert user._data == organizer
+
+    def test_user_name_is_str_repr(self, user):
+        assert "{0}".format(user) == user.name
 
 
 class TestGoToMeeting:

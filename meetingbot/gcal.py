@@ -138,6 +138,20 @@ class Event(object):
         )
 
 
+class User(object):
+
+    def __init__(self, data):
+        self._data = data
+        print(self._data)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def name(self):
+        return self._data['displayName']
+
+
 class GoToMeeting(object):
 
     def __init__(self, meeting_description):

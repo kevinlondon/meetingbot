@@ -53,9 +53,12 @@ def main():
 def start_countdown(calendars):
     while(1):
         countdowns = [calendar.countdown() for calendar in calendars]
-        print(countdowns)
+        print("\t".join(countdowns))
         time.sleep(1)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nQuitting the Meeting Bot. Goodbye!")
