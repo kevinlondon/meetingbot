@@ -5,6 +5,15 @@ import webbrowser
 
 import arrow
 
+
+def format_timedelta(tdelta):
+    """Return the timedelta as a 'HH:mm:ss' string."""
+    total_seconds = int(tdelta.total_seconds())
+    hours, remainder = divmod(total_seconds,60*60)
+    minutes, seconds = divmod(remainder,60)
+    return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
+
+
 class Calendar(object):
 
     ATTRIBUTES = ['id', 'summary']
@@ -36,6 +45,12 @@ class Calendar(object):
             return self.events[0]
         except (IndexError, TypeError):
             return None
+
+    def countdown(self):
+        if self.next_event:
+            return "{0}: {1}".format(self.summary, self.next_event.countdown())
+        else:
+            return "{0}: No events coming up.".format(self.summary)
 
     def get_events(self, calendar_service, days=1):
         now = arrow.now()
@@ -106,6 +121,21 @@ class Event(object):
             print("\t{0}".format(attendee))
 
         print("")
+
+    def countdown(self):
+        now = arrow.utcnow()
+        if self.start > now:
+            time_until = self.start - now
+            time_type = "start"
+        else:
+            time_until = self.end - now
+            time_type = "end"
+
+        return "{remaining} until the {time_type} of {name}".format(
+            remaining=format_timedelta(time_until),
+            time_type=time_type,
+            name=self.summary
+        )
 
 
 class GoToMeeting(object):

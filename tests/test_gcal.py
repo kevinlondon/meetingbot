@@ -3,7 +3,7 @@ import pytest
 import arrow
 from datetime import timedelta
 from mock import patch
-from room_indicator.gcal import Event, GoToMeeting, Calendar
+from meetingbot.gcal import Event, GoToMeeting, Calendar
 
 
 @pytest.fixture
@@ -94,6 +94,18 @@ class TestCalendar:
     def test_next_event_returns_none_when_no_valid_events(self, calendar):
         assert calendar.next_event is None
 
+    @patch.object(Event, "countdown", return_value="foo countdown")
+    def test_countdown_uses_start_before(self, cd_mock, calendar, event):
+        two_min_before_start = event.start.replace(minutes=-2)
+        calendar.events = [event,]
+        with patch.object(arrow, "utcnow", return_value=two_min_before_start):
+            countdown = calendar.countdown()
+            assert calendar.summary in countdown
+            assert "foo countdown" in countdown
+
+    def test_countdown_with_no_events_has_different_message(self, calendar):
+        assert "No events" in calendar.countdown()
+
 
 class TestEvents:
 
@@ -113,6 +125,18 @@ class TestEvents:
         minutes_before = event.end.replace(minutes=-10)
         with patch.object(arrow, "now", return_value=minutes_before):
             assert event.time_until_end == timedelta(minutes=10)
+
+    def test_countdown_before_start_returns_countdown_to_start(self, event):
+        event.start = arrow.utcnow().replace(minutes=+5, seconds=+1)
+        countdown = event.countdown()
+        expected_countdown = "00:05:00 until the start of {0}".format(event.summary)
+        assert countdown == expected_countdown
+
+    def test_countdown_after_start_returns_countdown_to_end(self, event):
+        event.end = arrow.utcnow().replace(minutes=+5, seconds=+1)
+        countdown = event.countdown()
+        expected_countdown = "00:05:00 until the end of {0}".format(event.summary)
+        assert countdown == expected_countdown
 
 
 class TestGoToMeeting:

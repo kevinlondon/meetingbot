@@ -3,6 +3,7 @@ import os
 import json
 import arrow
 import httplib2
+import time
 
 from oauth2client.client import SignedJwtAssertionCredentials
 from apiclient.discovery import build
@@ -46,13 +47,13 @@ def main():
     for calendar in useful_calendars:
         calendar.get_events(service)
 
-    countdown(useful_calendars)
+    start_countdown(useful_calendars)
 
 
-def countdown(calendars):
-    for calendar in calendars:
-        print("Calendar: {0}".format(calendar.summary))
-        calendar.next_event.count.show()
+def start_countdown(calendars):
+    while(1):
+        countdowns = [calendar.countdown() for calendar in calendars]
+        print(countdowns)
         time.sleep(1)
 
 
