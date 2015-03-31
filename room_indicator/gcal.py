@@ -1,4 +1,6 @@
 from operator import attrgetter
+from collections import deque
+
 import webbrowser
 
 import arrow
@@ -10,14 +12,34 @@ class Calendar(object):
     def __init__(self, data):
         self._data = data
         self._assign_attributes()
+        self._events = None
 
     def _assign_attributes(self):
         self.id = self._data['id']
         self.summary = self._data['summary']
 
-    def get_events(self, calendar_service):
+    @property
+    def events(self):
+        while self._events and self._events[0].end < arrow.utcnow():
+            # Remove any events that have already past.
+            self._events.popleft()
+
+        return self._events
+
+    @events.setter
+    def events(self, event_list):
+        self._events = deque(sorted(event_list, key=attrgetter('start')))
+
+    @property
+    def next_event(self):
+        try:
+            return self.events[0]
+        except (IndexError, TypeError):
+            return None
+
+    def get_events(self, calendar_service, days=1):
         now = arrow.now()
-        tomorrow = arrow.now().replace(days=+3)
+        tomorrow = arrow.now().replace(days=+days)
 
         events = calendar_service.events().list(
             calendarId=self.id,
@@ -28,7 +50,7 @@ class Calendar(object):
         ).execute()
 
         event_list = [Event(data) for data in events['items'] if 'start' in data]
-        self.events = sorted(event_list, key=attrgetter('start'))
+        self.events = event_list
 
 
 class Event(object):
@@ -79,7 +101,7 @@ class Event(object):
         print(self.summary)
         print("* {0} - {1}".format(self.start, self.end))
         print("* Time Until Start: {0}".format(self.time_until_start))
-        print("* Attendees:\n")
+        print("* Attendees:")
         for attendee in self.attendees:
             print("\t{0}".format(attendee))
 

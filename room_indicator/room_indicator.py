@@ -45,8 +45,15 @@ def main():
 
     for calendar in useful_calendars:
         calendar.get_events(service)
-        for event in calendar.events:
-            event.show()
+
+    countdown(useful_calendars)
+
+
+def countdown(calendars):
+    for calendar in calendars:
+        print("Calendar: {0}".format(calendar.summary))
+        calendar.next_event.count.show()
+        time.sleep(1)
 
 
 if __name__ == '__main__':

@@ -1,13 +1,14 @@
+import copy
 import pytest
 import arrow
 from datetime import timedelta
 from mock import patch
-from room_indicator.gcal import Event, GoToMeeting
+from room_indicator.gcal import Event, GoToMeeting, Calendar
 
 
 @pytest.fixture
-def room_calendar():
-    return {
+def calendar():
+    data = {
         u'kind': u'calendar#calendarListEntry',
         u'foregroundColor': u'#000000',
         u'defaultReminders': [],
@@ -19,11 +20,13 @@ def room_calendar():
         u'timeZone': u'America/Los_Angeles',
         u'accessRole': u'writer',
         u'id': u'somenumbers@resource.calendar.google.com'
-   }
+    }
+    return Calendar(data=data)
+
 
 
 @pytest.fixture
-def organizer_attendee():
+def organizer():
     {
         u'organizer': True,
         u'displayName': u'Kevin London',
@@ -33,7 +36,7 @@ def organizer_attendee():
 
 
 @pytest.fixture
-def room_attendee():
+def attendee():
     {
         u'resource': True,
         u'self': True,
@@ -44,12 +47,12 @@ def room_attendee():
 
 
 @pytest.fixture
-def attendees(room_attendee, organizer_attendee):
-    return [room_attendee, organizer_attendee]
+def attendees(attendee, organizer):
+    return [attendee, organizer]
 
 
 @pytest.fixture
-def room_event(attendees):
+def event(attendees):
     meeting_description = (u'What did I accomplish?\nJoin this.\n'
                            u'https://www4.gotomeeting.com/join/MEETING_ID\n')
     data = {
@@ -77,30 +80,45 @@ def room_event(attendees):
     return Event(data=data)
 
 
+class TestCalendar:
+
+    def test_next_event_pulls_first_event_not_ended(self, calendar, event):
+        later_event = Event(data=event._data)
+        later_event.start = later_event.start.replace(hours=+1)
+        later_event.end = later_event.end.replace(hours=+1)
+        calendar.events = [event, later_event]
+        past_event_end = event.end.replace(minutes=+5)
+        with patch.object(arrow, "utcnow", return_value=past_event_end):
+            assert calendar.next_event == later_event
+
+    def test_next_event_returns_none_when_no_valid_events(self, calendar):
+        assert calendar.next_event is None
+
+
 class TestEvents:
 
-    def test_room_event_parses_go_to_meeting(self, room_event):
-        assert isinstance(room_event.go_to_meeting, GoToMeeting)
+    def test_event_parses_go_to_meeting(self, event):
+        assert isinstance(event.go_to_meeting, GoToMeeting)
 
-    def test_room_without_go_to_meeting_has_no_object(self, room_event):
-        room_event.description = ""
-        assert room_event.go_to_meeting is None
+    def test_room_without_go_to_meeting_has_no_object(self, event):
+        event.description = ""
+        assert event.go_to_meeting is None
 
-    def test_assert_time_until_start_calculates_delta(self, room_event):
-        hours_before = room_event.start.replace(hours=-2)
+    def test_assert_time_until_start_calculates_delta(self, event):
+        hours_before = event.start.replace(hours=-2)
         with patch.object(arrow, "now", return_value=hours_before):
-            assert room_event.time_until_start == timedelta(hours=2)
+            assert event.time_until_start == timedelta(hours=2)
 
-    def test_assert_time_until_end_calculates_delta(self, room_event):
-        minutes_before = room_event.end.replace(minutes=-10)
+    def test_assert_time_until_end_calculates_delta(self, event):
+        minutes_before = event.end.replace(minutes=-10)
         with patch.object(arrow, "now", return_value=minutes_before):
-            assert room_event.time_until_end == timedelta(minutes=10)
+            assert event.time_until_end == timedelta(minutes=10)
 
 
 class TestGoToMeeting:
 
-    def test_can_pull_meeting_id_from_description(self, room_event):
-        gotomeeting = GoToMeeting(room_event.description)
+    def test_can_pull_meeting_id_from_description(self, event):
+        gotomeeting = GoToMeeting(event.description)
         assert gotomeeting.id == "MEETING_ID"
 
     def test_link_ends_with_id(self):
