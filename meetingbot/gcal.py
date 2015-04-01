@@ -1,9 +1,21 @@
+import os
 from operator import attrgetter
 from collections import deque
 
 import webbrowser
+from hypchat import HypChat
 
 import arrow
+
+
+def get_hipchat_users():
+    keypath = os.path.join(os.path.dirname(__file__), "hipchat.key")
+    with open(keypath, 'r') as hc_file:
+        key = hc_file.read().rstrip("\n")
+
+    print("%r" % key)
+    hc = HypChat(key)
+    users = hc.users()
 
 
 def format_timedelta(tdelta):
@@ -83,6 +95,7 @@ class Event(object):
 
     def _assign_attributes(self):
         self._assign_datetimes()
+        self.attendees = self._data['attendees']
         for attribute in self.ATTRIBUTES:
             value = self._data.get(attribute, "")
             setattr(self, attribute, value)
@@ -94,8 +107,12 @@ class Event(object):
 
     @property
     def attendees(self):
-        return [person['displayName'] for person in self._data['attendees']
-                if "Room" not in person['displayName']]
+        return self._attendees
+
+    @attendees.setter
+    def attendees(self, attendee_list):
+        self._attendees = [User(data=data) for data in attendee_list
+                           if "Room" not in data['displayName']]
 
     @property
     def time_until_start(self):
@@ -137,19 +154,49 @@ class Event(object):
             name=self.summary
         )
 
+    def notify(self):
+        message = "The '{0}' meeting will start in 5 minutes in the {1}."
+        for attendee in self.attendees:
+            attendee.send_message(message)
+
 
 class User(object):
 
     def __init__(self, data):
         self._data = data
-        print(self._data)
+        self._hipchat = None
 
     def __str__(self):
         return self.name
 
     @property
+    def in_hipchat(self):
+        if not self._hipchat:
+            self._hipchat = self.find_in_hipchat()
+
+        return self._hipchat
+
+    @property
     def name(self):
         return self._data['displayName']
+
+    def send_message(self, message):
+        try:
+            self.in_hipchat.message(message, notify=True)
+        except Exception as err:
+            print("Could not message {0}. {1}".format(self.name, err))
+
+    def find_in_hipchat(self):
+        hipchat_users = get_hipchat_users()
+        for user in hipchat_users:
+            if user['name'] == self.name:
+                return user
+
+        # As fallback, check on first name only.
+        first_name = self.name.split()[0]
+        for user in hipchat_users:
+            if first_name in user['name']:
+                return user
 
 
 class GoToMeeting(object):

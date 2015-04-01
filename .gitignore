@@ -1,4 +1,5 @@
 server_key.json
+hipchat.key
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

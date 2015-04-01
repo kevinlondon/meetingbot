@@ -2,7 +2,8 @@ import copy
 import pytest
 import arrow
 from datetime import timedelta
-from mock import patch
+from mock import patch, Mock
+from meetingbot import gcal
 from meetingbot.gcal import Event, GoToMeeting, Calendar, User
 
 
@@ -80,6 +81,28 @@ def event(attendees):
     return Event(data=data)
 
 
+@pytest.fixture
+def hipchat_users():
+    return {
+        'links': {'self': 'https://api.hipchat.com/v2/user'},
+        'maxResults': 100,
+        'startIndex': 0,
+        'items': [
+            {
+                'id': 11111,
+                'links': {'self': 'https://api.hipchat.com/v2/user/11111'},
+                'mention_name': 'Foo',
+                'name': 'Foo Lee'
+            }, {
+                'id': 22222,
+                'links': {'self': 'https://api.hipchat.com/v2/user/22222'},
+                'mention_name': 'Kevin',
+                'name': 'Kevin London'
+            }
+        ]
+    }
+
+
 class TestCalendar:
 
     def test_next_event_pulls_first_event_not_ended(self, calendar, event):
@@ -138,6 +161,13 @@ class TestEvents:
         expected_countdown = "00:05:00 until the end of {0}".format(event.summary)
         assert countdown == expected_countdown
 
+    def test_send_message_to_user_uses_hipchat(self, organizer, event):
+        user = User(data=organizer)
+        user.send_message = Mock()
+        event._attendees = [user, ]
+        event.notify()
+        assert user.send_message.called
+
 
 class TestUser:
 
@@ -150,6 +180,41 @@ class TestUser:
 
     def test_user_name_is_str_repr(self, user):
         assert "{0}".format(user) == user.name
+
+    def test_send_message_uses_hipchat(self, user):
+        msg = "foo"
+        user._hipchat = Mock()
+        user.send_message(msg)
+        user._hipchat.message.assert_called_with(msg, notify=True)
+        assert user._hipchat.message.called
+
+    def test_in_hipchat_property_gets_hipchat_user(self, user):
+        assert user._hipchat is None
+        expected_user = {"name": "hi"}
+        user.find_in_hipchat = Mock(return_value=expected_user)
+        assert user.in_hipchat == expected_user
+
+    def test_send_hipchat_message_does_not_fail_without_user(self, user):
+        user._hipchat = {"foo": "thing"}
+        try:
+            user.send_message("hi")
+        except:
+            # Should not happen
+            raise
+
+    def test_find_in_hipchat_matches_on_exact_name(self, user, hipchat_users):
+        users = hipchat_users['items']
+        expected_user = users[1]
+        with patch.object(gcal, "get_hipchat_users", return_value=users):
+            assert user.find_in_hipchat() == expected_user
+
+    def test_find_matches_on_first_name_as_fallback(self, user, hipchat_users):
+        users = hipchat_users['items']
+        expected_user = users[0]
+        # Just copy their first name
+        user._data['displayName'] = expected_user['name'].split()[0]
+        with patch.object(gcal, "get_hipchat_users", return_value=users):
+            assert user.find_in_hipchat() == expected_user
 
 
 class TestGoToMeeting:
