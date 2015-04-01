@@ -167,6 +167,21 @@ class TestEvents:
         event._attendees = [user, ]
         event.notify()
         assert user.send_message.called
+        assert event.notified_attendees is True
+
+    def test_should_notify_fires_when_almost_time_and_not_notified(self, event):
+        event.start = arrow.utcnow().replace(minutes=+4)
+        assert event.should_notify is True
+
+    def test_should_notify_is_false_when_already_notified(self, event):
+        event.start = arrow.utcnow().replace(minutes=+4)
+        event.notified_attendees = True
+        assert event.should_notify is False
+
+    def test_should_notify_is_false_when_too_far_from_start(self, event):
+        event.start = arrow.utcnow().replace(hours=+2)
+        event.notified_attendees = False
+        assert event.should_notify is False
 
 
 class TestUser:
@@ -219,8 +234,11 @@ class TestUser:
 
 class TestGoToMeeting:
 
-    def test_can_pull_meeting_id_from_description(self, event):
-        gotomeeting = GoToMeeting(event.description)
+    @pytest.fixture
+    def gotomeeting(self, event):
+        return GoToMeeting(event.description)
+
+    def test_can_pull_meeting_id_from_description(self, gotomeeting):
         assert gotomeeting.id == "MEETING_ID"
 
     def test_link_ends_with_id(self):
@@ -235,3 +253,6 @@ class TestGoToMeeting:
         gtm._id = "foo"
         gtm.join()
         open_browser_mock.assert_called_once_with(gtm.url)
+
+    def test_join_instructions(self, gotomeeting):
+        assert gotomeeting.url in gotomeeting.join_instructions

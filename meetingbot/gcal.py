@@ -1,6 +1,8 @@
 import os
+import datetime
 from operator import attrgetter
 from collections import deque
+import functools
 
 import webbrowser
 from hypchat import HypChat
@@ -8,14 +10,24 @@ from hypchat import HypChat
 import arrow
 
 
+def memoize(obj):
+    # from https://wiki.python.org/moin/PythonDecoratorLibrary
+    cache = obj.cache = {}
+    @functools.wraps(obj)
+    def memoizer(*args, **kwargs):
+        if args not in cache:
+            cache[args] = obj(*args, **kwargs)
+        return cache[args]
+    return memoizer
+
+
 def get_hipchat_users():
     keypath = os.path.join(os.path.dirname(__file__), "hipchat.key")
     with open(keypath, 'r') as hc_file:
         key = hc_file.read().rstrip("\n")
 
-    print("%r" % key)
-    hc = HypChat(key)
-    users = hc.users()
+    raw_users = HypChat(key).users()
+    return raw_users['items']
 
 
 def format_timedelta(tdelta):
@@ -89,6 +101,8 @@ class Event(object):
         self._data = data
         self._assign_attributes()
         self._meeting = None
+        self.notified_attendees = False
+        self._room = None
 
     def __repr__(self):
         return "{0} - {1}\t{2}".format(self.start, self.end, self.summary)
@@ -115,6 +129,15 @@ class Event(object):
                            if "Room" not in data['displayName']]
 
     @property
+    def room(self):
+        if not self._room:
+            rooms  = [data for data in self._data['attendees']
+                      if 'Room' in data['displayName']]
+            self._room = rooms[0]['displayName']
+
+        return self._room
+
+    @property
     def time_until_start(self):
         return self.start - arrow.now()
 
@@ -128,6 +151,15 @@ class Event(object):
             self._meeting = GoToMeeting(self.description)
 
         return self._meeting
+
+    @property
+    def should_notify(self):
+        NOTIFY_WINDOW = datetime.timedelta(minutes=5)
+        time_until = self.start - arrow.utcnow()
+        if time_until < NOTIFY_WINDOW and self.notified_attendees is False:
+            return True
+        else:
+            return False
 
     def show(self):
         print(self.summary)
@@ -144,6 +176,8 @@ class Event(object):
         if self.start > now:
             time_until = self.start - now
             time_type = "start"
+            if self.should_notify:
+                self.notify()
         else:
             time_until = self.end - now
             time_type = "end"
@@ -155,9 +189,14 @@ class Event(object):
         )
 
     def notify(self):
-        message = "The '{0}' meeting will start in 5 minutes in the {1}."
+        message = "The '{0}' meeting will start in the {1} in 5 minutes. "
+        if self.go_to_meeting:
+            message += self.go_to_meeting.join_instructions
+
         for attendee in self.attendees:
-            attendee.send_message(message)
+            attendee.send_message(message.format(self.summary, self.room))
+
+        self.notified_attendees = True
 
 
 class User(object):
@@ -184,6 +223,7 @@ class User(object):
         try:
             self.in_hipchat.message(message, notify=True)
         except Exception as err:
+            raise
             print("Could not message {0}. {1}".format(self.name, err))
 
     def find_in_hipchat(self):
@@ -216,7 +256,11 @@ class GoToMeeting(object):
 
     @property
     def url(self):
-        return "https://app.gotomeeting.com/index.html?meetingid={0}".format(self.id)
+        return "https://global.gotomeeting.com/join/{0}".format(self.id)
+
+    @property
+    def join_instructions(self):
+        return "To join the GoToMeeting, please go to {0}.".format(self.url)
 
     def join(self):
         """Open a web browser and join the GoToMeeting.
@@ -227,3 +271,4 @@ class GoToMeeting(object):
         on a Mac or Windows installation.
         """
         webbrowser.open(self.url)
+

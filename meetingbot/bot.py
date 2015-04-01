@@ -53,7 +53,10 @@ def main():
 def start_countdown(calendars):
     while(1):
         countdowns = [calendar.countdown() for calendar in calendars]
-        print("\t".join(countdowns))
+        output = "\t\t".join(countdowns) + "\r"
+        # as per http://stackoverflow.com/questions/517127
+        sys.stdout.write(output)
+        sys.stdout.flush()
         time.sleep(1)
 
 
