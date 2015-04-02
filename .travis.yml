@@ -4,5 +4,9 @@ python:
     - "3.3"
     - "3.4"
 # Install dependencies
-install: "pip install -r requirements.txt"
-script: "py.test"
+install: 
+    - "pip install -r dev-requirements.txt"
+script: 
+    - "py.test --cov meetingbot --cov-report term-missing --pep8"
+after_success:
+    - coveralls

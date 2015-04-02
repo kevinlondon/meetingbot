@@ -13,6 +13,7 @@ import arrow
 def memoize(obj):
     # from https://wiki.python.org/moin/PythonDecoratorLibrary
     cache = obj.cache = {}
+
     @functools.wraps(obj)
     def memoizer(*args, **kwargs):
         if args not in cache:
@@ -33,8 +34,8 @@ def get_hipchat_users():
 def format_timedelta(tdelta):
     """Return the timedelta as a 'HH:mm:ss' string."""
     total_seconds = int(tdelta.total_seconds())
-    hours, remainder = divmod(total_seconds,60*60)
-    minutes, seconds = divmod(remainder,60)
+    hours, remainder = divmod(total_seconds, 60*60)
+    minutes, seconds = divmod(remainder, 60)
     return "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
 
@@ -88,8 +89,8 @@ class Calendar(object):
             singleEvents=True,
         ).execute()
 
-        event_list = [Event(data) for data in events['items'] if 'start' in data]
-        self.events = event_list
+        self.events = [Event(data) for data in events['items']
+                       if 'start' in data]
 
 
 class Event(object):
@@ -131,8 +132,8 @@ class Event(object):
     @property
     def room(self):
         if not self._room:
-            rooms  = [data for data in self._data['attendees']
-                      if 'Room' in data['displayName']]
+            rooms = [data for data in self._data['attendees']
+                     if 'Room' in data['displayName']]
             self._room = rooms[0]['displayName']
 
         return self._room
@@ -270,4 +271,3 @@ class GoToMeeting(object):
         on a Mac or Windows installation.
         """
         webbrowser.open(self.url)
-

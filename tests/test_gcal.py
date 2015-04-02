@@ -25,7 +25,6 @@ def calendar():
     return Calendar(data=data)
 
 
-
 @pytest.fixture
 def organizer():
     return {
@@ -120,7 +119,7 @@ class TestCalendar:
     @patch.object(Event, "countdown", return_value="foo countdown")
     def test_countdown_uses_start_before(self, cd_mock, calendar, event):
         two_min_before_start = event.start.replace(minutes=-2)
-        calendar.events = [event,]
+        calendar.events = [event, ]
         with patch.object(arrow, "utcnow", return_value=two_min_before_start):
             countdown = calendar.countdown()
             assert calendar.summary in countdown
@@ -152,14 +151,14 @@ class TestEvents:
     def test_countdown_before_start_returns_countdown_to_start(self, event):
         event.start = arrow.utcnow().replace(minutes=+5, seconds=+1)
         countdown = event.countdown()
-        expected_countdown = "00:05:00 until the start of {0}".format(event.summary)
-        assert countdown == expected_countdown
+        expected = "00:05:00 until the start of {0}".format(event.summary)
+        assert countdown == expected
 
     def test_countdown_after_start_returns_countdown_to_end(self, event):
         event.end = arrow.utcnow().replace(minutes=+5, seconds=+1)
         countdown = event.countdown()
-        expected_countdown = "00:05:00 until the end of {0}".format(event.summary)
-        assert countdown == expected_countdown
+        expected = "00:05:00 until the end of {0}".format(event.summary)
+        assert countdown == expected
 
     def test_send_message_to_user_uses_hipchat(self, organizer, event):
         user = User(data=organizer)
@@ -169,7 +168,7 @@ class TestEvents:
         assert user.send_message.called
         assert event.notified_attendees is True
 
-    def test_should_notify_fires_when_almost_time_and_not_notified(self, event):
+    def test_should_notify_fires_when_time_and_not_notified(self, event):
         event.start = arrow.utcnow().replace(minutes=+4)
         assert event.should_notify is True
 
