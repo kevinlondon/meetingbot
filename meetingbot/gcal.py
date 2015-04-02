@@ -223,7 +223,6 @@ class User(object):
         try:
             self.in_hipchat.message(message, notify=True)
         except Exception as err:
-            raise
             print("Could not message {0}. {1}".format(self.name, err))
 
     def find_in_hipchat(self):
