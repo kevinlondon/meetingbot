@@ -1,5 +1,6 @@
 server_key.json
 hipchat.key
+*.swo
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -57,3 +58,4 @@ docs/_build/
 
 # PyBuilder
 target/
+
