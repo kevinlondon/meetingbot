@@ -162,16 +162,6 @@ class Event(object):
         else:
             return False
 
-    def show(self):
-        print(self.summary)
-        print("* {0} - {1}".format(self.start, self.end))
-        print("* Time Until Start: {0}".format(self.time_until_start))
-        print("* Attendees:")
-        for attendee in self.attendees:
-            print("\t{0}".format(attendee))
-
-        print("")
-
     def countdown(self):
         now = arrow.utcnow()
         if self.start > now:

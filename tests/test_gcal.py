@@ -6,23 +6,7 @@ from mock import patch, Mock
 from meetingbot import gcal
 from meetingbot.gcal import Event, GoToMeeting, Calendar, User
 
-
-@pytest.fixture
-def calendar():
-    data = {
-        u'kind': u'calendar#calendarListEntry',
-        u'foregroundColor': u'#000000',
-        u'defaultReminders': [],
-        u'colorId': u'5',
-        u'selected': True,
-        u'summary': u'Small Conference Room',
-        u'etag': u'"1427261373011000"',
-        u'backgroundColor': u'#ff7537',
-        u'timeZone': u'America/Los_Angeles',
-        u'accessRole': u'writer',
-        u'id': u'somenumbers@resource.calendar.google.com'
-    }
-    return Calendar(data=data)
+from .fixtures import calendar, calendar_data
 
 
 @pytest.fixture
@@ -127,6 +111,22 @@ class TestCalendar:
 
     def test_countdown_with_no_events_has_different_message(self, calendar):
         assert "No events" in calendar.countdown()
+
+    def test_get_events_loads_events(self, calendar, event):
+        events = {"items": [event._data, ]}
+
+        class MockService:
+            def events(self):
+                return self
+
+            def list(self, *args, **kwargs):
+                return self
+
+            def execute(self):
+                return events
+
+        calendar.get_events(calendar_service=MockService())
+        assert len(calendar._events) == 1
 
 
 class TestEvents:
