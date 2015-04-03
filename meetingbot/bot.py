@@ -8,7 +8,7 @@ import time
 from oauth2client.client import SignedJwtAssertionCredentials
 from apiclient.discovery import build
 
-from gcal import Calendar, Event
+from .gcal import Calendar, Event
 
 SERVER_KEY_PATH = "server_key.json"
 USER = "kevin@wiredrive.com"
