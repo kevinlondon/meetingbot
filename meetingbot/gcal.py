@@ -34,6 +34,7 @@ class Calendar(object):
         self._data = data
         self._assign_attributes()
         self._events = None
+        self._color = None
 
     def _assign_attributes(self):
         self.id = self._data['id']
@@ -57,6 +58,15 @@ class Calendar(object):
             return self.events[0]
         except (IndexError, TypeError):
             return None
+
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        # To be done.
+        pass
 
     def countdown(self):
         if self.next_event:
@@ -140,11 +150,14 @@ class Event(object):
 
         return self._meeting
 
+    def starts_within(self, minutes):
+        time_window = datetime.timedelta(minutes=5)
+        time_until = self.start - arrow.utcnow()
+        return time_until < time_window
+
     @property
     def should_notify(self):
-        NOTIFY_WINDOW = datetime.timedelta(minutes=5)
-        time_until = self.start - arrow.utcnow()
-        if time_until < NOTIFY_WINDOW and self.notified_attendees is False:
+        if self.starts_within(minutes=5) and self.notified_attendees is False:
             return True
         else:
             return False
