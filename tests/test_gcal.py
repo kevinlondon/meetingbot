@@ -4,86 +4,11 @@ import arrow
 from datetime import timedelta
 from mock import patch, Mock
 from meetingbot import gcal
-from meetingbot.gcal import Event, GoToMeeting, Calendar, User
+from meetingbot.gcal import Event, Calendar, User
+from meetingbot.meetings import GoToMeeting
 
-from .fixtures import calendar, calendar_data
-
-
-@pytest.fixture
-def organizer():
-    return {
-        u'organizer': True,
-        u'displayName': u'Kevin London',
-        u'email': u'kevinlondon@gmail.com',
-        u'responseStatus': u'accepted'
-    }
-
-
-@pytest.fixture
-def room():
-    return {
-        u'resource': True,
-        u'self': True,
-        u'displayName': u'Small Conference Room',
-        u'email': u'foo-email@resource.calendar.google.com',
-        u'responseStatus': u'accepted'
-    }
-
-
-@pytest.fixture
-def attendees(room, organizer):
-    return [room, organizer]
-
-
-@pytest.fixture
-def event(attendees):
-    meeting_description = (u'What did I accomplish?\nJoin this.\n'
-                           u'https://www4.gotomeeting.com/join/MEETING_ID\n')
-    data = {
-        u'status': u'confirmed',
-        u'kind': u'calendar#event',
-        u'end': {u'dateTime': u'2015-03-26T10:00:00-07:00'},
-        u'description': meeting_description,
-        u'created': u'2014-12-01T17:35:56.000Z',
-        u'iCalUID': u'something@google.com',
-        u'reminders': {u'useDefault': True},
-        u'htmlLink': u'https://www.google.com/calendar/event?eid=foo',
-        u'sequence': 0,
-        u'updated': u'2015-03-23T17:07:38.562Z',
-        u'summary': u'Daily Event',
-        u'start': {u'dateTime': u'2015-03-26T09:45:00-07:00'},
-        u'etag': u'"2854260917124000"',
-        u'originalStartTime': {u'dateTime': u'2015-03-26T09:45:00-07:00'},
-        u'location': u'Small Conference Room',
-        u'recurringEventId': u're-id',
-        u'attendees': attendees,
-        u'organizer': {u'displayName': u'Kevin', u'email': u'foo@foo.com'},
-        u'creator': {u'displayName': u'Kevin', u'email': u'foo@foo.com'},
-        u'id': u'eventid', u'hangoutLink': u'https://plus.google.com/link'
-    }
-    return Event(data=data)
-
-
-@pytest.fixture
-def hipchat_users():
-    return {
-        'links': {'self': 'https://api.hipchat.com/v2/user'},
-        'maxResults': 100,
-        'startIndex': 0,
-        'items': [
-            {
-                'id': 11111,
-                'links': {'self': 'https://api.hipchat.com/v2/user/11111'},
-                'mention_name': 'Foo',
-                'name': 'Foo Lee'
-            }, {
-                'id': 22222,
-                'links': {'self': 'https://api.hipchat.com/v2/user/22222'},
-                'mention_name': 'Kevin',
-                'name': 'Kevin London'
-            }
-        ]
-    }
+from .fixtures import (calendar, calendar_data, organizer, room, event,
+    hipchat_users, attendees)
 
 
 class TestHipchat:
@@ -239,29 +164,3 @@ class TestUser:
         user._data['displayName'] = expected_user['name'].split()[0]
         with patch.object(gcal, "get_hipchat_users", return_value=users):
             assert user.find_in_hipchat() == expected_user
-
-
-class TestGoToMeeting:
-
-    @pytest.fixture
-    def gotomeeting(self, event):
-        return GoToMeeting(event.description)
-
-    def test_can_pull_meeting_id_from_description(self, gotomeeting):
-        assert gotomeeting.id == "MEETING_ID"
-
-    def test_link_ends_with_id(self):
-        gotomeeting = GoToMeeting(meeting_description="")
-        fake_id = "foo"
-        gotomeeting._id = fake_id
-        assert gotomeeting.url.endswith(fake_id)
-
-    @patch("webbrowser.open")
-    def test_opening_link_includes_url(self, open_browser_mock):
-        gtm = GoToMeeting("")
-        gtm._id = "foo"
-        gtm.join()
-        open_browser_mock.assert_called_once_with(gtm.url)
-
-    def test_join_instructions(self, gotomeeting):
-        assert gotomeeting.url in gotomeeting.join_instructions
