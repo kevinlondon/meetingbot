@@ -86,6 +86,16 @@ def hipchat_users():
     }
 
 
+class TestHipchat:
+
+    @patch.object(gcal, "HypChat")
+    def test_hipchat_user_call_returns_users(self, hc_mock):
+        hc_mock().users = Mock(return_value={"items": "foo"})
+        users = gcal.get_hipchat_users()
+        assert hc_mock().users.called
+        assert users == "foo"
+
+
 class TestCalendar:
 
     def test_next_event_pulls_first_event_not_ended(self, calendar, event):

@@ -18,10 +18,12 @@ def memoize(obj):
     def memoizer(*args, **kwargs):
         if args not in cache:
             cache[args] = obj(*args, **kwargs)
+            print cache
         return cache[args]
     return memoizer
 
 
+@memoize
 def get_hipchat_users():
     keypath = os.path.join(os.path.dirname(__file__), "hipchat.key")
     with open(keypath, 'r') as hc_file:
