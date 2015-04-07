@@ -8,7 +8,7 @@ from meetingbot.gcal import Event, Calendar, User
 from meetingbot.meetings import GoToMeeting
 
 from .fixtures import (calendar, calendar_data, organizer, room, event,
-    hipchat_users, attendees)
+                       hipchat_users, attendees)
 
 
 class TestHipchat:

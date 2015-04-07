@@ -1,5 +1,6 @@
 import webbrowser
 
+
 class GoToMeeting(object):
 
     def __init__(self, meeting_description):

@@ -79,7 +79,6 @@ def attendees(room, organizer):
     return [room, organizer]
 
 
-
 @pytest.fixture
 def hipchat_users():
     return {
@@ -100,5 +99,3 @@ def hipchat_users():
             }
         ]
     }
-
-
