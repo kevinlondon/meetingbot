@@ -8,20 +8,16 @@ import time
 from oauth2client.client import SignedJwtAssertionCredentials
 from apiclient.discovery import build
 
+from . import settings
 from .gcal import Calendar, Event
-
-SERVER_KEY_PATH = "server_key.json"
-USER = "kevin@wiredrive.com"
 
 
 def authenticate_client():
-    with open(SERVER_KEY_PATH, "r") as auth_file:
-        auth = json.load(auth_file)
-
+    auth = settings.load()["google"]
     credentials = SignedJwtAssertionCredentials(
         auth['client_email'], auth['private_key'],
         "https://www.googleapis.com/auth/calendar.readonly",
-        sub=USER,
+        sub=auth['user'],
     )
     http_auth = credentials.authorize(httplib2.Http())
     return http_auth

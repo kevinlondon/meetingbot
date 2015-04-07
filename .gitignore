@@ -1,5 +1,4 @@
-server_key.json
-hipchat.key
+config.yaml
 *.swo
 
 # Byte-compiled / optimized / DLL files

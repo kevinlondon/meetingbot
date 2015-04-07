@@ -2,37 +2,19 @@ import os
 import datetime
 from operator import attrgetter
 from collections import deque
-import functools
 
 from hypchat import HypChat
+from . import settings
 from .meetings import GoToMeeting
+from .utils import memoize
 
 import arrow
 
 
-def memoize(obj):
-    # from https://wiki.python.org/moin/PythonDecoratorLibrary
-    cache = obj.cache = {}
-
-    @functools.wraps(obj)
-    def memoizer(*args, **kwargs):
-        if args not in cache:
-            cache[args] = obj(*args, **kwargs)
-        return cache[args]
-    return memoizer
-
-
-def read_hipchat_key():
-    keypath = os.path.join(os.path.dirname(__file__), "hipchat.key")
-    with open(keypath, 'r') as hc_file:
-        key = hc_file.read().rstrip("\n")
-    return key
-
-
 @memoize
 def get_hipchat_users():
-    key = read_hipchat_key()
-    raw_users = HypChat(key).users()
+    config = settings.load()
+    raw_users = HypChat(config['hipchat']['token']).users()
     return raw_users['items']
 
 
