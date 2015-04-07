@@ -13,8 +13,9 @@ from .fixtures import (calendar, calendar_data, organizer, room, event,
 
 class TestHipchat:
 
+    @patch.object(gcal, "read_hipchat_key")
     @patch.object(gcal, "HypChat")
-    def test_hipchat_user_call_returns_users(self, hc_mock):
+    def test_hipchat_user_call_returns_users(self, hc_mock, hc_key):
         hc_mock().users = Mock(return_value={"items": "foo"})
         users = gcal.get_hipchat_users()
         assert hc_mock().users.called

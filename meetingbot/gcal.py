@@ -23,12 +23,16 @@ def memoize(obj):
     return memoizer
 
 
-@memoize
-def get_hipchat_users():
+def read_hipchat_key():
     keypath = os.path.join(os.path.dirname(__file__), "hipchat.key")
     with open(keypath, 'r') as hc_file:
         key = hc_file.read().rstrip("\n")
+    return key
 
+
+@memoize
+def get_hipchat_users():
+    key = read_hipchat_key()
     raw_users = HypChat(key).users()
     return raw_users['items']
 
