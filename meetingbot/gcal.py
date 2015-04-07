@@ -18,7 +18,6 @@ def memoize(obj):
     def memoizer(*args, **kwargs):
         if args not in cache:
             cache[args] = obj(*args, **kwargs)
-            print cache
         return cache[args]
     return memoizer
 
