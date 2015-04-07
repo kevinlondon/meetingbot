@@ -58,10 +58,3 @@ def start_countdown(calendars):
         sys.stdout.write(output)
         sys.stdout.flush()
         time.sleep(1)
-
-
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nQuitting the Meeting Bot. Goodbye!")
