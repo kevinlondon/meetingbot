@@ -65,6 +65,18 @@ class TestCalendar:
         calendar.get_events(calendar_service=MockService())
         assert len(calendar._events) == 1
 
+    @patch.object(gcal.pub, "sendMessage")
+    def test_change_color_does_not_pub_for_same(self, msg_mock, calendar):
+        calendar._color = "red"
+        calendar.color = "red"
+        assert not msg_mock.called
+
+    @patch.object(gcal.pub, "sendMessage")
+    def test_change_color_sends_message_for_new(self, msg_mock, calendar):
+        calendar._color = None
+        calendar.color = "red"
+        msg_mock.assert_called_with(gcal.LIGHT_CHANNEL, color="red")
+
 
 class TestEvents:
 

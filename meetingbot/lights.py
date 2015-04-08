@@ -19,6 +19,10 @@ def change_light(color):
     except KeyError:
         raise ValueError("Invalid input color type: {0}".format(color))
 
+    change_littlebits_power(percent)
+
+
+def change_littlebits_power(percent):
     littlebits = settings.load()['littlebits']
     url = "https://api-http.littlebitscloud.cc/devices/{0}/output"
     requests.post(

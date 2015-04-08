@@ -3,12 +3,15 @@ import datetime
 from operator import attrgetter
 from collections import deque
 
+from pubsub import pub
 from hypchat import HypChat
 from . import settings
 from .meetings import GoToMeeting
 from .utils import memoize
 
 import arrow
+
+LIGHT_CHANNEL = "meeting_light"
 
 
 @memoize
@@ -64,9 +67,12 @@ class Calendar(object):
         return self._color
 
     @color.setter
-    def color(self, value):
-        # To be done.
-        pass
+    def color(self, new_color):
+        if self._color == new_color:
+            return
+
+        pub.sendMessage(LIGHT_CHANNEL, color=new_color)
+        self._color = new_color
 
     def countdown(self):
         if self.next_event:
