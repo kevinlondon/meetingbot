@@ -15,3 +15,8 @@ class TestLittleBits:
     def test_invalid_color_raises_value_error(self):
         with pytest.raises(ValueError):
             lights.change_light(color="black")
+
+    @patch.object(lights.pub, "subscribe")
+    def test_configure_calls_subscribe_with_light_channel(self, sub_mock):
+        lights.configure()
+        sub_mock.assert_called_with(lights.change_light, lights.CHANNEL)

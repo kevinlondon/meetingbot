@@ -3,7 +3,7 @@ import pytest
 import arrow
 from datetime import timedelta
 from mock import patch, Mock
-from meetingbot import gcal
+from meetingbot import gcal, lights
 from meetingbot.gcal import Event, Calendar, User
 from meetingbot.meetings import GoToMeeting
 
@@ -75,7 +75,7 @@ class TestCalendar:
     def test_change_color_sends_message_for_new(self, msg_mock, calendar):
         calendar._color = None
         calendar.color = "red"
-        msg_mock.assert_called_with(gcal.LIGHT_CHANNEL, color="red")
+        msg_mock.assert_called_with(lights.CHANNEL, color="red")
 
 
 class TestEvents:

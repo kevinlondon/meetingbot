@@ -5,11 +5,16 @@ import requests
 from . import settings
 
 
+CHANNEL = "meeting_light"
 COLORS = {
     "green": 60,
     "orange": 80,
     "red": 100,
 }
+
+
+def configure():
+    pub.subscribe(change_light, CHANNEL)
 
 
 def change_light(color):

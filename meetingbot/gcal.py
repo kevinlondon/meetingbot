@@ -5,13 +5,11 @@ from collections import deque
 
 from pubsub import pub
 from hypchat import HypChat
-from . import settings
+from . import settings, lights
 from .meetings import GoToMeeting
 from .utils import memoize
 
 import arrow
-
-LIGHT_CHANNEL = "meeting_light"
 
 
 @memoize
@@ -71,12 +69,27 @@ class Calendar(object):
         if self._color == new_color:
             return
 
-        pub.sendMessage(LIGHT_CHANNEL, color=new_color)
+        pub.sendMessage(lights.CHANNEL, color=new_color)
         self._color = new_color
+
+    def update_lights(self):
+        if self.next_event.starts_within(minutes=15):
+            self.color = "orange"
+        elif self.next_event.time_until_start < datetime.timedelta(minutes=0):
+            self.color = "red"
+        else:
+            self.color = "green"
 
     def countdown(self):
         if self.next_event:
-            return "{0}: {1}".format(self.summary, self.next_event.countdown())
+            countdown = "{0}: {1}".format(self.summary, self.next_event.countdown())
+            if self.next_event.in_progress:
+                try:
+                    countdown = countdown + ", {0}".format(self.events[1].countdown())
+                except IndexError:
+                    # TODO: Fix and test
+                    pass
+            return countdown
         else:
             return "{0}: No events coming up.".format(self.summary)
 
@@ -146,6 +159,10 @@ class Event(object):
         return self.start - arrow.now()
 
     @property
+    def in_progress(self):
+        return self.start < arrow.now() < self.end
+
+    @property
     def time_until_end(self):
         return self.end - arrow.now()
 
@@ -159,6 +176,9 @@ class Event(object):
     def starts_within(self, minutes):
         time_window = datetime.timedelta(minutes=5)
         time_until = self.start - arrow.utcnow()
+        if time_until < datetime.timedelta(seconds=0):
+            return False
+
         return time_until < time_window
 
     @property
