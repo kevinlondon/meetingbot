@@ -82,10 +82,12 @@ class Calendar(object):
 
     def countdown(self):
         if self.next_event:
-            countdown = "{0}: {1}".format(self.summary, self.next_event.countdown())
+            countdown = "{0}: {1}".format(self.summary,
+                                          self.next_event.countdown())
             if self.next_event.in_progress:
                 try:
-                    countdown = countdown + ", {0}".format(self.events[1].countdown())
+                    next_countdown = self.events[1].countdown
+                    countdown += ", {0}".format(next_countdown)
                 except IndexError:
                     # TODO: Fix and test
                     pass
@@ -126,7 +128,11 @@ class Event(object):
 
     def _assign_attributes(self):
         self._assign_datetimes()
-        self.attendees = self._data['attendees']
+        try:
+            self.attendees = self._data['attendees']
+        except KeyError:
+            self.attendees = []
+
         for attribute in self.ATTRIBUTES:
             value = self._data.get(attribute, "")
             setattr(self, attribute, value)
@@ -209,6 +215,9 @@ class Event(object):
         message = "The '{0}' meeting will start in the {1} in 5 minutes. "
         if self.go_to_meeting:
             message += self.go_to_meeting.join_instructions
+
+        # TODO: Cleanup
+        message += " (This is an automated message)"
 
         for attendee in self.attendees:
             attendee.send_message(message.format(self.summary, self.room))
