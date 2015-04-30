@@ -86,7 +86,7 @@ class Calendar(object):
                                           self.next_event.countdown())
             if self.next_event.in_progress:
                 try:
-                    next_countdown = self.events[1].countdown
+                    next_countdown = self.events[1].countdown()
                     countdown += ", {0}".format(next_countdown)
                 except IndexError:
                     # TODO: Fix and test
@@ -218,7 +218,6 @@ class Event(object):
 
         # TODO: Cleanup
         message += " (This is an automated message)"
-
         for attendee in self.attendees:
             attendee.send_message(message.format(self.summary, self.room))
 
