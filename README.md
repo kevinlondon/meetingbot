@@ -57,3 +57,14 @@ Running the Bot
 ===============
 
 `$ python -m meetingbot` will start the bot.
+
+
+Running the Tests
+=================
+
+To install the developer requirements and run the tests, run:
+
+```
+$ pip install -r dev-requirements.txt
+$ py.test
+```
